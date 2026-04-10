@@ -1,19 +1,17 @@
-# realtek-rtl88xxau-auto-installer
-One-script installer that fixes Alfa rtl88xxau adapter driver compilation on Kali Linux kernel 6.15 and 6.16           
-
 # Alfa rtl88xxau Driver Installer for Kali Linux
 
-One-script installer that fixes the Alfa AWUS036ACH (and other rtl88xxau-based adapters) on Kali Linux with kernel 6.15 and 6.16, where the default driver fails to compile due to breaking kernel API changes.
+One-script installer that fixes the Alfa AWUS036ACH (and other rtl88xxau-based adapters) on Kali Linux with kernel 6.15, 6.16, and 6.18, where the default driver fails to compile due to breaking kernel API changes.
 
 ## The Problem
 
-After a Kali update to kernel 6.15 or 6.16, the `realtek-rtl88xxau-dkms` driver fails to build. This breaks monitor mode and packet injection on Alfa adapters — making tools like wifite, airodump-ng, and aircrack-ng unusable.
+After a Kali update to kernel 6.15+, the `realtek-rtl88xxau-dkms` driver fails to build. This breaks monitor mode and packet injection on Alfa adapters — making tools like wifite, airodump-ng, and aircrack-ng unusable.
 
-The errors are caused by two kernel API changes:
+The errors are caused by three kernel API changes:
 - **Kernel 6.15** — `del_timer_sync()` and `from_timer()` were replaced with `timer_delete_sync()` and `timer_container_of()`
 - **Kernel 6.16** — a `radio_idx` parameter was added to several cfg80211 wireless functions
+- **Kernel 6.18** — `EXTRA_CFLAGS` was removed from the kernel build system; only `ccflags-y` is recognized
 
-This script installs the driver and patches the source code automatically before compiling.
+This script installs the driver, patches the source code automatically, and builds it directly from source.
 
 ## Supported Adapters
 
@@ -27,38 +25,39 @@ This script installs the driver and patches the source code automatically before
 ## Requirements
 
 - Kali Linux (tested on 2025.x)
-- Linux kernel 6.15 or 6.16
+- Linux kernel 6.15, 6.16, or 6.18
 - Alfa adapter plugged in via USB
 - Internet connection (for apt packages)
 - Root / sudo access
 
 ## Installation
 
-**Option 1 — Download and run:**
+**Option 1 — Clone and run:**
 ```bash
-git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
+git clone https://github.com/Ac3rN/realtek-rtl88xxau-auto-installer.git
+cd realtek-rtl88xxau-auto-installer
 sudo bash install_alfa_driver.sh
 ```
 
 **Option 2 — One-liner:**
 ```bash
-curl -sL https://raw.githubusercontent.com/<your-username>/<your-repo>/main/install_alfa_driver.sh | sudo bash
+curl -sL https://raw.githubusercontent.com/Ac3rN/realtek-rtl88xxau-auto-installer/main/install_alfa_driver.sh | sudo bash
 ```
 
 ## What the Script Does
 
 1. Detects your Alfa adapter via `lsusb`
-2. Installs build dependencies (`dkms`, `build-essential`, kernel headers, etc.)
+2. Installs build dependencies (`build-essential`, kernel headers, etc.)
 3. Removes any old broken driver
-4. Installs `realtek-rtl88xxau-dkms` via apt
-5. Patches the driver source for kernel 6.15+ and 6.16+ compatibility
-6. Rebuilds and installs the DKMS module
-7. Loads the module and verifies the interface is up
+4. Installs `realtek-rtl88xxau-dkms` via apt (to get the driver source)
+5. Patches the driver source for kernel 6.15 / 6.16 / 6.18 compatibility
+6. Builds and installs the kernel module directly from source
+7. Blacklists the conflicting in-kernel `rtw88` driver
+8. Loads the module and verifies the interface is up
 
 ## After Install
 
-Put the adapter into monitor mode and start scanning:
+Your Alfa adapter will show up as `wlan0`. Put it into monitor mode and start scanning:
 ```bash
 sudo airmon-ng check kill
 sudo wifite
@@ -80,13 +79,14 @@ Unplug and replug the Alfa adapter after the script finishes.
 sudo apt-get install linux-headers-$(uname -r)
 ```
 
-**DKMS build still fails after patching**
+**Build still fails after patching**
 The apt package version may have changed. Check:
 ```bash
 ls /usr/src | grep realtek
 dkms status
+uname -r
 ```
-Open an issue with the output and your kernel version (`uname -r`).
+Open an issue with the output and your kernel version.
 
 **Adapter detected but no networks showing in wifite**
 Make sure interfering processes are killed first:
