@@ -25,7 +25,7 @@ This script installs the driver, patches the source code automatically, and buil
 ## Requirements
 
 - Kali Linux (tested on 2025.x)
-- Linux kernel 6.15, 6.16, or 6.18
+- Linux kernel 6.15 or newer
 - Alfa adapter plugged in via USB
 - Internet connection (for apt packages)
 - Root / sudo access
@@ -57,7 +57,7 @@ curl -sL https://raw.githubusercontent.com/Ac3rN/realtek-rtl88xxau-auto-installe
 
 ## After Install
 
-Your Alfa adapter will show up as `wlan0`. Put it into monitor mode and start scanning:
+Your Alfa adapter will show up as a `wlan` interface (e.g. `wlan0`, `wlan1`). Put it into monitor mode and start scanning:
 ```bash
 sudo airmon-ng check kill
 sudo wifite
@@ -97,3 +97,4 @@ sudo airmon-ng check kill
 ## License
 
 MIT
+         
